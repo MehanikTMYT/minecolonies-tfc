@@ -6,7 +6,7 @@ import com.ldtteam.blockui.views.BOWindow;
 import com.ldtteam.structurize.client.gui.AbstractWindowSkeleton;
 import com.structurizereplacements.StructurizeReplacements;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * A small modal yes/no confirmation dialog, so a destructive action (e.g. deleting a user preset) can't be
@@ -24,7 +24,7 @@ public class WindowConfirm extends AbstractWindowSkeleton
     public WindowConfirm(final BOWindow parent, final Component title, final Component message,
                          final Component confirmLabel, final Runnable onConfirm)
     {
-        super(ResourceLocation.fromNamespaceAndPath(StructurizeReplacements.MODID, RESOURCE));
+        super(Identifier.fromNamespaceAndPath(StructurizeReplacements.MODID, RESOURCE));
         this.parent = parent;
         this.onConfirm = onConfirm;
         findPaneOfTypeByID("title", Text.class).setText(title);

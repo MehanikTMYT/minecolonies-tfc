@@ -2,19 +2,13 @@ package com.structurizereplacements.data;
 
 import com.structurizereplacements.StructurizeReplacements;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.packs.PackLocationInfo;
-import net.minecraft.server.packs.PackResources;
-import net.minecraft.server.packs.PackSelectionConfig;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.PackType;
-import net.minecraft.server.packs.PathPackResources;
 import net.minecraft.server.packs.repository.Pack;
 import net.minecraft.server.packs.repository.PackSource;
-import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.event.AddPackFindersEvent;
 
-import java.util.Optional;
 
-import java.nio.file.Path;
 
 /**
  * Registers an <b>optional, opt-in</b> built-in datapack ({@code default_rules_datapack/} inside our jar)
@@ -61,46 +55,14 @@ public final class DefaultRulesDataPack
         {
             return;
         }
-        final Path source = ModList.get().getModFileById(StructurizeReplacements.MODID).getFile().findResource(FOLDER);
-        // 1.21 reshuffled this API: the id/title/source and the required/position flags moved out of
-        // readMetaAndCreate's parameter list into the PackLocationInfo and PackSelectionConfig records, and
-        // PathPackResources moved from NeoForge into vanilla (net.minecraft.server.packs) taking the
-        // location info instead of an id + isBuiltin flag.
-        final PackLocationInfo location = new PackLocationInfo(
-                "structurizereplacements_defaults",
+        // PORT(26.1): IModFile#findResource is gone; NeoForge's addPackFinders resolves the folder inside our mod
+        // file itself. alwaysActive=false keeps it in the Data Packs screen, OFF by default (opt-in).
+        event.addPackFinders(
+                Identifier.fromNamespaceAndPath(StructurizeReplacements.MODID, FOLDER),
+                PackType.SERVER_DATA,
                 Component.literal("Structurize Replacements — default pick pools"),
                 OPT_IN,
-                Optional.empty());
-        // required=false: available in the Data Packs screen, OFF by default (opt-in). fixedPosition=false
-        // so the player can reorder it.
-        final PackSelectionConfig selection = new PackSelectionConfig(false, Pack.Position.TOP, false);
-        // Pack.ResourcesSupplier gained a second abstract method in 1.21 (openPrimary/openFull), so it is no
-        // longer a lambda target. Both open the same folder — we ship no overlays.
-        final Pack.ResourcesSupplier resources = new Pack.ResourcesSupplier()
-        {
-            @Override
-            public PackResources openPrimary(final PackLocationInfo info)
-            {
-                return new PathPackResources(info, source);
-            }
-
-            @Override
-            public PackResources openFull(final PackLocationInfo info, final Pack.Metadata metadata)
-            {
-                return new PathPackResources(info, source);
-            }
-        };
-        event.addRepositorySource(consumer ->
-        {
-            final Pack pack = Pack.readMetaAndCreate(
-                    location,
-                    resources,
-                    PackType.SERVER_DATA,
-                    selection);
-            if (pack != null)
-            {
-                consumer.accept(pack);
-            }
-        });
+                false,
+                Pack.Position.TOP);
     }
 }

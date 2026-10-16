@@ -4,7 +4,7 @@
 // of ours, runs Mojang mappings in dev AND production (so no reobf, no mixin refmap), and generates
 // the run configs from a `neoForge { runs { } }` block.
 plugins {
-    id 'net.neoforged.moddev' version '2.0.143' apply false
+    id 'net.neoforged.gradle.userdev' version '7.1.38' apply false
 }
 
 // Per-mod auto-rolling "build number" used as the PATCH of each mod's version (MAJOR.MINOR stay manual in

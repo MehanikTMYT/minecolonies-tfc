@@ -87,7 +87,7 @@ public final class MineColoniesBridge implements ColonyBridge
     @Override
     public boolean canEdit(final ServerPlayer player, final BlockPos buildingPos)
     {
-        final IColony colony = IColonyManager.getInstance().getColonyByPosFromWorld(player.serverLevel(), buildingPos);
+        final IColony colony = IColonyManager.getInstance().getColonyByPosFromWorld(player.level(), buildingPos);
         return colony != null && colony.getPermissions().hasPermission(player, Action.MANAGE_HUTS);
     }
 

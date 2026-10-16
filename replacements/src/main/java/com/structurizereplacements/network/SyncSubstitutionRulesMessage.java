@@ -11,7 +11,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
@@ -35,7 +35,7 @@ public class SyncSubstitutionRulesMessage implements CustomPacketPayload
 {
     public static final CustomPacketPayload.Type<SyncSubstitutionRulesMessage> TYPE =
             new CustomPacketPayload.Type<>(
-                    ResourceLocation.fromNamespaceAndPath(StructurizeReplacements.MODID, "substitution_rules"));
+                    Identifier.fromNamespaceAndPath(StructurizeReplacements.MODID, "substitution_rules"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, SyncSubstitutionRulesMessage> STREAM_CODEC =
             StreamCodec.ofMember(SyncSubstitutionRulesMessage::encode, SyncSubstitutionRulesMessage::new);
@@ -143,11 +143,11 @@ public class SyncSubstitutionRulesMessage implements CustomPacketPayload
 
     private static void writeNullableBlock(final FriendlyByteBuf buf, @Nullable final Block block)
     {
-        final ResourceLocation id = block == null ? null : BuiltInRegistries.BLOCK.getKey(block);
+        final Identifier id = block == null ? null : BuiltInRegistries.BLOCK.getKey(block);
         buf.writeBoolean(id != null);
         if (id != null)
         {
-            buf.writeResourceLocation(id);
+            buf.writeIdentifier(id);
         }
     }
 
@@ -158,8 +158,8 @@ public class SyncSubstitutionRulesMessage implements CustomPacketPayload
         {
             return null;
         }
-        final ResourceLocation id = buf.readResourceLocation();
-        return BuiltInRegistries.BLOCK.containsKey(id) ? BuiltInRegistries.BLOCK.get(id) : null;
+        final Identifier id = buf.readIdentifier();
+        return BuiltInRegistries.BLOCK.containsKey(id) ? BuiltInRegistries.BLOCK.getValue(id) : null;
     }
 
     private static void writeNullableTag(final FriendlyByteBuf buf, @Nullable final TagKey<Block> tag)
@@ -167,14 +167,14 @@ public class SyncSubstitutionRulesMessage implements CustomPacketPayload
         buf.writeBoolean(tag != null);
         if (tag != null)
         {
-            buf.writeResourceLocation(tag.location());
+            buf.writeIdentifier(tag.location());
         }
     }
 
     @Nullable
     private static TagKey<Block> readNullableTag(final FriendlyByteBuf buf)
     {
-        return buf.readBoolean() ? TagKey.create(Registries.BLOCK, buf.readResourceLocation()) : null;
+        return buf.readBoolean() ? TagKey.create(Registries.BLOCK, buf.readIdentifier()) : null;
     }
 
     private static void writeStringMap(final FriendlyByteBuf buf, final Map<String, String> map)

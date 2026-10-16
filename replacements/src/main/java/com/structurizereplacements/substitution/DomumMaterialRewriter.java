@@ -8,7 +8,7 @@ import com.ldtteam.structurize.util.BlockInfo;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -87,7 +87,7 @@ public final class DomumMaterialRewriter
         return state != null
                 && state.getBlock() instanceof IMateriallyTexturedBlock
                 && info.hasTileEntityData()
-                && info.getTileEntityData().contains(TEXTURE_DATA_KEY, Tag.TAG_COMPOUND);
+                && info.getTileEntityData().contains(TEXTURE_DATA_KEY);
     }
 
     /**
@@ -107,11 +107,11 @@ public final class DomumMaterialRewriter
         if (stack.isEmpty()
                 || !(host instanceof IMateriallyTexturedBlock)
                 || tileEntityData == null
-                || !tileEntityData.contains(TEXTURE_DATA_KEY, Tag.TAG_COMPOUND))
+                || !tileEntityData.contains(TEXTURE_DATA_KEY))
         {
             return stack;
         }
-        final CompoundTag textureData = tileEntityData.getCompound(TEXTURE_DATA_KEY);
+        final CompoundTag textureData = tileEntityData.getCompoundOrEmpty(TEXTURE_DATA_KEY);
         if (!textureData.isEmpty())
         {
             MaterialTextureData.deserializeFromNBT(textureData.copy()).writeToItemStack(stack);
@@ -134,14 +134,14 @@ public final class DomumMaterialRewriter
         }
         for (final String compoundKey : TEXTURE_COMPOUND_KEYS)
         {
-            if (!tileEntityData.contains(compoundKey, Tag.TAG_COMPOUND))
+            if (!tileEntityData.contains(compoundKey))
             {
                 continue;
             }
-            final CompoundTag textureData = tileEntityData.getCompound(compoundKey);
-            for (final String key : textureData.getAllKeys())
+            final CompoundTag textureData = tileEntityData.getCompoundOrEmpty(compoundKey);
+            for (final String key : textureData.keySet())
             {
-                final Block contained = block(textureData.getString(key));
+                final Block contained = block(textureData.getStringOr(key, ""));
                 if (contained != null)
                 {
                     out.add(contained);
@@ -150,9 +150,9 @@ public final class DomumMaterialRewriter
         }
         for (final String stringKey : MATERIAL_STRING_KEYS)
         {
-            if (tileEntityData.contains(stringKey, Tag.TAG_STRING))
+            if (tileEntityData.contains(stringKey))
             {
-                final Block contained = block(tileEntityData.getString(stringKey));
+                final Block contained = block(tileEntityData.getStringOr(stringKey, ""));
                 if (contained != null)
                 {
                     out.add(contained);
@@ -188,7 +188,7 @@ public final class DomumMaterialRewriter
         }
 
         // component-id -> the tag of blocks it legally accepts, for the skip-illegal check.
-        final Map<ResourceLocation, TagKey<Block>> validSkins = new HashMap<>();
+        final Map<Identifier, TagKey<Block>> validSkins = new HashMap<>();
         for (final IMateriallyTexturedBlockComponent component : materiallyTextured.getComponents())
         {
             validSkins.put(component.getId(), component.getValidSkins());
@@ -199,12 +199,12 @@ public final class DomumMaterialRewriter
         // The material-map compound(s): textureData + (dynamic timber frame) originalTextureData.
         for (final String compoundKey : TEXTURE_COMPOUND_KEYS)
         {
-            if (!tileEntityData.contains(compoundKey, Tag.TAG_COMPOUND))
+            if (!tileEntityData.contains(compoundKey))
             {
                 continue;
             }
             final CompoundTag rewritten =
-                    rewriteTextureCompound(tileEntityData.getCompound(compoundKey), validSkins, resolver);
+                    rewriteTextureCompound(tileEntityData.getCompoundOrEmpty(compoundKey), validSkins, resolver);
             if (rewritten != null)
             {
                 if (result == null)
@@ -221,11 +221,11 @@ public final class DomumMaterialRewriter
         // mirrors what the compound rewrite above already accepted for the same material.
         for (final String stringKey : MATERIAL_STRING_KEYS)
         {
-            if (!tileEntityData.contains(stringKey, Tag.TAG_STRING))
+            if (!tileEntityData.contains(stringKey))
             {
                 continue;
             }
-            final Block from = block(tileEntityData.getString(stringKey));
+            final Block from = block(tileEntityData.getStringOr(stringKey, ""));
             if (from == null)
             {
                 continue;
@@ -251,13 +251,13 @@ public final class DomumMaterialRewriter
      */
     @Nullable
     private static CompoundTag rewriteTextureCompound(final CompoundTag textureData,
-                                                      final Map<ResourceLocation, TagKey<Block>> validSkins,
+                                                      final Map<Identifier, TagKey<Block>> validSkins,
                                                       final UnaryOperator<Block> resolver)
     {
         CompoundTag rewritten = null; // lazily copied on first actual change
-        for (final String key : textureData.getAllKeys())
+        for (final String key : textureData.keySet())
         {
-            final Block from = block(textureData.getString(key));
+            final Block from = block(textureData.getStringOr(key, ""));
             if (from == null)
             {
                 continue;
@@ -269,7 +269,7 @@ public final class DomumMaterialRewriter
             }
             // skip-illegal: only substitute within what the component accepts (TFC targets are tagged in via
             // the datapack so they pass here).
-            final TagKey<Block> skins = validSkins.get(ResourceLocation.tryParse(key));
+            final TagKey<Block> skins = validSkins.get(Identifier.tryParse(key));
             if (skins != null && !to.defaultBlockState().is(skins))
             {
                 continue;
@@ -338,7 +338,7 @@ public final class DomumMaterialRewriter
      */
     public static boolean enforceWorldMaterials(final Level world, final BlockPos pos, @Nullable final CompoundTag blueprintTag)
     {
-        if (blueprintTag == null || world.isClientSide)
+        if (blueprintTag == null || world.isClientSide())
         {
             return false;
         }
@@ -367,13 +367,13 @@ public final class DomumMaterialRewriter
     @Nullable
     private static CompoundTag materialSource(final CompoundTag tag)
     {
-        if (tag.contains(ORIGINAL_TEXTURE_DATA_KEY, Tag.TAG_COMPOUND) && !tag.getCompound(ORIGINAL_TEXTURE_DATA_KEY).isEmpty())
+        if (tag.contains(ORIGINAL_TEXTURE_DATA_KEY) && !tag.getCompoundOrEmpty(ORIGINAL_TEXTURE_DATA_KEY).isEmpty())
         {
-            return tag.getCompound(ORIGINAL_TEXTURE_DATA_KEY);
+            return tag.getCompoundOrEmpty(ORIGINAL_TEXTURE_DATA_KEY);
         }
-        if (tag.contains(TEXTURE_DATA_KEY, Tag.TAG_COMPOUND) && !tag.getCompound(TEXTURE_DATA_KEY).isEmpty())
+        if (tag.contains(TEXTURE_DATA_KEY) && !tag.getCompoundOrEmpty(TEXTURE_DATA_KEY).isEmpty())
         {
-            return tag.getCompound(TEXTURE_DATA_KEY);
+            return tag.getCompoundOrEmpty(TEXTURE_DATA_KEY);
         }
         return null;
     }
@@ -381,12 +381,12 @@ public final class DomumMaterialRewriter
     @Nullable
     private static Block block(final String id)
     {
-        final ResourceLocation rl = ResourceLocation.tryParse(id);
+        final Identifier rl = Identifier.tryParse(id);
         if (rl == null || !BuiltInRegistries.BLOCK.containsKey(rl))
         {
             return null;
         }
-        return BuiltInRegistries.BLOCK.get(rl);
+        return BuiltInRegistries.BLOCK.getValue(rl);
     }
 
     private static String idOf(final Block block)

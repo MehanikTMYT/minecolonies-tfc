@@ -5,8 +5,7 @@ import com.ldtteam.blockui.UiRenderMacros;
 import com.ldtteam.blockui.controls.ButtonImage;
 import com.ldtteam.blockui.controls.Image;
 import com.ldtteam.blockui.util.records.SizeI;
-import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * A {@link ButtonImage} that draws its background image (a button frame) and then overlays a separate
@@ -24,7 +23,7 @@ import net.minecraft.resources.ResourceLocation;
  */
 public class ButtonImageWithIcon extends ButtonImage
 {
-    private final ResourceLocation icon;
+    private final Identifier icon;
     private final int               iconSrcW;
     private final int               iconSrcH;
     private final int               inset;
@@ -33,7 +32,7 @@ public class ButtonImageWithIcon extends ButtonImage
      * @param icon  the icon texture to overlay (drawn at full source resolution).
      * @param inset pixels of background frame left visible on each side (the icon fills the rest).
      */
-    public ButtonImageWithIcon(final ResourceLocation icon, final int inset)
+    public ButtonImageWithIcon(final Identifier icon, final int inset)
     {
         this.icon = icon;
         this.inset = inset;
@@ -52,10 +51,8 @@ public class ButtonImageWithIcon extends ButtonImage
     @Override
     public void postDrawBackground(final BOGuiGraphics target, final double mx, final double my)
     {
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
         // Whole icon (0,0..src) blitted into the inset rect; GPU does the single downscale.
-        UiRenderMacros.blit(target.pose(), icon,
+        UiRenderMacros.blit(target, icon,
           x + inset, y + inset, width - 2 * inset, height - 2 * inset,
           0, 0, iconSrcW, iconSrcH, iconSrcW, iconSrcH);
     }

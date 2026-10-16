@@ -4,7 +4,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.core.registries.BuiltInRegistries;
 
@@ -32,12 +32,12 @@ public final class ChoiceCodec
 
     public static void write(final FriendlyByteBuf buf, final Map<Block, Block> choices)
     {
-        final Map<ResourceLocation, ResourceLocation> ids = new HashMap<>();
+        final Map<Identifier, Identifier> ids = new HashMap<>();
         if (choices != null)
         {
             choices.forEach((from, to) -> {
-                final ResourceLocation f = BuiltInRegistries.BLOCK.getKey(from);
-                final ResourceLocation t = BuiltInRegistries.BLOCK.getKey(to);
+                final Identifier f = BuiltInRegistries.BLOCK.getKey(from);
+                final Identifier t = BuiltInRegistries.BLOCK.getKey(to);
                 if (f != null && t != null)
                 {
                     ids.put(f, t);
@@ -46,8 +46,8 @@ public final class ChoiceCodec
         }
         buf.writeVarInt(ids.size());
         ids.forEach((f, t) -> {
-            buf.writeResourceLocation(f);
-            buf.writeResourceLocation(t);
+            buf.writeIdentifier(f);
+            buf.writeIdentifier(t);
         });
     }
 
@@ -73,10 +73,10 @@ public final class ChoiceCodec
             final int count = buf.readVarInt();
             for (int i = 0; i < count && buf.isReadable(); i++)
             {
-                final ResourceLocation fromId = buf.readResourceLocation();
-                final ResourceLocation toId = buf.readResourceLocation();
-                final Block from = BuiltInRegistries.BLOCK.containsKey(fromId) ? BuiltInRegistries.BLOCK.get(fromId) : null;
-                final Block to = BuiltInRegistries.BLOCK.containsKey(toId) ? BuiltInRegistries.BLOCK.get(toId) : null;
+                final Identifier fromId = buf.readIdentifier();
+                final Identifier toId = buf.readIdentifier();
+                final Block from = BuiltInRegistries.BLOCK.containsKey(fromId) ? BuiltInRegistries.BLOCK.getValue(fromId) : null;
+                final Block to = BuiltInRegistries.BLOCK.containsKey(toId) ? BuiltInRegistries.BLOCK.getValue(toId) : null;
                 if (from != null && to != null)
                 {
                     map.put(from, to);
@@ -105,8 +105,8 @@ public final class ChoiceCodec
         }
         final ListTag list = new ListTag();
         choices.forEach((from, to) -> {
-            final ResourceLocation f = BuiltInRegistries.BLOCK.getKey(from);
-            final ResourceLocation t = BuiltInRegistries.BLOCK.getKey(to);
+            final Identifier f = BuiltInRegistries.BLOCK.getKey(from);
+            final Identifier t = BuiltInRegistries.BLOCK.getKey(to);
             if (f != null && t != null)
             {
                 final CompoundTag entry = new CompoundTag();
@@ -128,19 +128,19 @@ public final class ChoiceCodec
     /** Read a choice map written by {@link #writeNbt}; {@code null} when absent or empty. */
     public static Map<Block, Block> readNbt(final CompoundTag tag, final String key)
     {
-        if (!tag.contains(key, Tag.TAG_LIST))
+        if (!tag.contains(key))
         {
             return null;
         }
         final Map<Block, Block> map = new HashMap<>();
-        final ListTag list = tag.getList(key, Tag.TAG_COMPOUND);
+        final ListTag list = tag.getListOrEmpty(key);
         for (int i = 0; i < list.size(); i++)
         {
-            final CompoundTag entry = list.getCompound(i);
-            final ResourceLocation f = ResourceLocation.tryParse(entry.getString("from"));
-            final ResourceLocation t = ResourceLocation.tryParse(entry.getString("to"));
-            final Block from = (f != null && BuiltInRegistries.BLOCK.containsKey(f)) ? BuiltInRegistries.BLOCK.get(f) : null;
-            final Block to = (t != null && BuiltInRegistries.BLOCK.containsKey(t)) ? BuiltInRegistries.BLOCK.get(t) : null;
+            final CompoundTag entry = list.getCompoundOrEmpty(i);
+            final Identifier f = Identifier.tryParse(entry.getStringOr("from", ""));
+            final Identifier t = Identifier.tryParse(entry.getStringOr("to", ""));
+            final Block from = (f != null && BuiltInRegistries.BLOCK.containsKey(f)) ? BuiltInRegistries.BLOCK.getValue(f) : null;
+            final Block to = (t != null && BuiltInRegistries.BLOCK.containsKey(t)) ? BuiltInRegistries.BLOCK.getValue(t) : null;
             if (from != null && to != null)
             {
                 map.put(from, to);

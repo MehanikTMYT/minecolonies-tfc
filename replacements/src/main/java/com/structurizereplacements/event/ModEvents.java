@@ -7,7 +7,8 @@ import com.structurizereplacements.placement.StagedChoices;
 import com.structurizereplacements.preset.BuiltinPresetReloadListener;
 import com.structurizereplacements.substitution.BlockSubstitutionReloadListener;
 import com.structurizereplacements.substitution.BlockSubstitutions;
-import net.neoforged.neoforge.event.AddReloadListenerEvent;
+import net.neoforged.neoforge.event.AddServerReloadListenersEvent;
+import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.event.OnDatapackSyncEvent;
 import net.neoforged.neoforge.event.TagsUpdatedEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
@@ -26,10 +27,11 @@ public final class ModEvents
     private ModEvents() {}
 
     @SubscribeEvent
-    public static void onAddReloadListeners(final AddReloadListenerEvent event)
+    public static void onAddReloadListeners(final AddServerReloadListenersEvent event)
     {
-        event.addListener(new BlockSubstitutionReloadListener());
-        event.addListener(new BuiltinPresetReloadListener());
+        // PORT(26.1): server reload listeners are registered under an id.
+        event.addListener(Identifier.fromNamespaceAndPath(StructurizeReplacements.MODID, "block_substitutions"), new BlockSubstitutionReloadListener());
+        event.addListener(Identifier.fromNamespaceAndPath(StructurizeReplacements.MODID, "block_substitution_presets"), new BuiltinPresetReloadListener());
     }
 
     /**

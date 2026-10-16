@@ -10,7 +10,7 @@ import com.ldtteam.blockui.views.ScrollingListContainer.RowSizeModifier;
 import com.structurizereplacements.client.gui.ButtonImageWithIcon;
 import com.structurizereplacements.client.gui.WindowReplacements;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /**
  * Wraps the miner settings window's {@link ScrollingList.DataProvider} to append <b>one extra row</b> at the
@@ -131,9 +131,9 @@ public class MineshaftSettingsListProvider implements ScrollingList.DataProvider
         // Action control — our replace icon over the colony mod's mini-button frame, the same icon-button
         // style as the "Replace" button on the Build Options window (2px frame visible, icon fills the rest).
         final ButtonImageWithIcon button = new ButtonImageWithIcon(
-                ResourceLocation.fromNamespaceAndPath("structurizereplacements", "textures/gui/replace_button.png"), 2);
+                Identifier.fromNamespaceAndPath("structurizereplacements", "textures/gui/replace_button.png"), 2);
         button.setID("structurizereplacements:mineshaftPalette");
-        button.setImage(ResourceLocation.fromNamespaceAndPath(ColonyIntegration.bridge().assetNamespace(),
+        button.setImage(Identifier.fromNamespaceAndPath(ColonyIntegration.bridge().assetNamespace(),
                 "textures/gui/builderhut/builder_button_mini.png"));
         button.setSize(16, 16);
         button.setPosition(5, 24);

@@ -11,7 +11,7 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +30,7 @@ public class SyncBuiltinPresetsMessage implements CustomPacketPayload
 {
     public static final CustomPacketPayload.Type<SyncBuiltinPresetsMessage> TYPE =
             new CustomPacketPayload.Type<>(
-                    ResourceLocation.fromNamespaceAndPath(StructurizeReplacements.MODID, "builtin_presets"));
+                    Identifier.fromNamespaceAndPath(StructurizeReplacements.MODID, "builtin_presets"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, SyncBuiltinPresetsMessage> STREAM_CODEC =
             StreamCodec.ofMember(SyncBuiltinPresetsMessage::encode, SyncBuiltinPresetsMessage::new);
@@ -84,11 +84,11 @@ public class SyncBuiltinPresetsMessage implements CustomPacketPayload
 
     private static void writeNullableBlock(final FriendlyByteBuf buf, @Nullable final Block block)
     {
-        final ResourceLocation id = block == null ? null : BuiltInRegistries.BLOCK.getKey(block);
+        final Identifier id = block == null ? null : BuiltInRegistries.BLOCK.getKey(block);
         buf.writeBoolean(id != null);
         if (id != null)
         {
-            buf.writeResourceLocation(id);
+            buf.writeIdentifier(id);
         }
     }
 
@@ -99,8 +99,8 @@ public class SyncBuiltinPresetsMessage implements CustomPacketPayload
         {
             return null;
         }
-        final ResourceLocation id = buf.readResourceLocation();
-        return BuiltInRegistries.BLOCK.containsKey(id) ? BuiltInRegistries.BLOCK.get(id) : null;
+        final Identifier id = buf.readIdentifier();
+        return BuiltInRegistries.BLOCK.containsKey(id) ? BuiltInRegistries.BLOCK.getValue(id) : null;
     }
 
     @Override

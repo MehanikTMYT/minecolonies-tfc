@@ -7,7 +7,7 @@ import com.google.gson.JsonObject;
 import com.structurizereplacements.StructurizeReplacements;
 import com.structurizereplacements.preset.Preset;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.Block;
 import net.neoforged.fml.loading.FMLPaths;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -165,7 +165,7 @@ public final class PresetLibrary
             obj.addProperty("name", preset.displayName().getString());
             if (preset.icon() != null)
             {
-                final ResourceLocation iconId = BuiltInRegistries.BLOCK.getKey(preset.icon());
+                final Identifier iconId = BuiltInRegistries.BLOCK.getKey(preset.icon());
                 if (iconId != null)
                 {
                     obj.addProperty("icon", iconId.toString());
@@ -173,8 +173,8 @@ public final class PresetLibrary
             }
             final JsonArray picks = new JsonArray();
             preset.picks().forEach((from, to) -> {
-                final ResourceLocation f = BuiltInRegistries.BLOCK.getKey(from);
-                final ResourceLocation t = BuiltInRegistries.BLOCK.getKey(to);
+                final Identifier f = BuiltInRegistries.BLOCK.getKey(from);
+                final Identifier t = BuiltInRegistries.BLOCK.getKey(to);
                 if (f != null && t != null)
                 {
                     final JsonObject entry = new JsonObject();
@@ -286,7 +286,7 @@ public final class PresetLibrary
 
     private static Block block(final String id)
     {
-        final ResourceLocation key = ResourceLocation.tryParse(id);
-        return (key != null && BuiltInRegistries.BLOCK.containsKey(key)) ? BuiltInRegistries.BLOCK.get(key) : null;
+        final Identifier key = Identifier.tryParse(id);
+        return (key != null && BuiltInRegistries.BLOCK.containsKey(key)) ? BuiltInRegistries.BLOCK.getValue(key) : null;
     }
 }

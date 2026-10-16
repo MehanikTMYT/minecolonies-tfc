@@ -9,7 +9,7 @@ import com.structurizereplacements.client.gui.WindowReplacements;
 import com.structurizereplacements.integration.colony.BuildingChoiceContext;
 import com.structurizereplacements.integration.colony.LevelPaths;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import no.monopixel.slimcolonies.api.colony.buildings.views.IBuildingView;
 import no.monopixel.slimcolonies.core.client.gui.WindowBuildBuilding;
 import org.spongepowered.asm.mixin.Mixin;
@@ -57,13 +57,13 @@ public abstract class MixinWindowBuildBuilding
         final int size = 16;
         // 2px frame visible on each side; the 32×32 icon fills the inner 12×12, overlaid at draw time.
         final ButtonImageWithIcon button = new ButtonImageWithIcon(
-                new ResourceLocation("structurizereplacements", "textures/gui/replace_button.png"), 2);
+                new Identifier("structurizereplacements", "textures/gui/replace_button.png"), 2);
         button.setID("structurizereplacements:replace");
         button.setSize(size, size);
         // Empty top-left corner, left of the style "<" arrow (which begins at x=40).
         button.setPosition(4, 1);
         // The fork's own mini-button frame as the (light) background; the icon is overlaid over it.
-        button.setImage(new ResourceLocation("slimcolonies", "textures/gui/builderhut/builder_button_mini.png"), false);
+        button.setImage(new Identifier("slimcolonies", "textures/gui/builderhut/builder_button_mini.png"), false);
         button.setHandler(b -> new WindowReplacements(
                 new BuildingChoiceContext(this.building, targetStructurePack(), targetStructurePath(), this::updateResources),
                 (BOWindow) (Object) this).open());

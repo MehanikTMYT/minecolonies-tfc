@@ -14,7 +14,7 @@ import com.structurizereplacements.preset.BuiltinPresets;
 import com.structurizereplacements.preset.Preset;
 import com.structurizereplacements.substitution.BlockSubstitutions;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
@@ -58,7 +58,7 @@ public class WindowPresetList extends AbstractWindowSkeleton
 
     public WindowPresetList(final ReplacementChoiceContext target, final BOWindow parent)
     {
-        super(ResourceLocation.fromNamespaceAndPath(StructurizeReplacements.MODID, RESOURCE));
+        super(Identifier.fromNamespaceAndPath(StructurizeReplacements.MODID, RESOURCE));
         this.target = target;
         this.parent = parent;
         registerButton("done", this::returnToParent);

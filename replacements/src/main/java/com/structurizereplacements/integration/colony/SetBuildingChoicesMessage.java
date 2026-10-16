@@ -9,7 +9,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.Block;
@@ -29,7 +29,7 @@ public class SetBuildingChoicesMessage implements CustomPacketPayload
 {
     public static final CustomPacketPayload.Type<SetBuildingChoicesMessage> TYPE =
             new CustomPacketPayload.Type<>(
-                    ResourceLocation.fromNamespaceAndPath(StructurizeReplacements.MODID, "set_building_choices"));
+                    Identifier.fromNamespaceAndPath(StructurizeReplacements.MODID, "set_building_choices"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, SetBuildingChoicesMessage> STREAM_CODEC =
             StreamCodec.ofMember(SetBuildingChoicesMessage::encode, SetBuildingChoicesMessage::new);
@@ -75,7 +75,7 @@ public class SetBuildingChoicesMessage implements CustomPacketPayload
             {
                 return;
             }
-            final ServerLevel level = sender.serverLevel();
+            final ServerLevel level = sender.level();
             final Object building = bridge.buildingAt(level, buildingPos);
             // Validate against the server's candidate pools — keep only picks the GUI could legitimately offer,
             // so a modified client can't store an arbitrary substitution on the building.

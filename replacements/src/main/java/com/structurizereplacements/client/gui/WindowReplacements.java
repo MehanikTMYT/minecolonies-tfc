@@ -17,7 +17,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
@@ -67,7 +67,7 @@ public class WindowReplacements extends AbstractWindowSkeleton
      */
     public WindowReplacements(final ReplacementChoiceContext context, final BOWindow parent)
     {
-        super(ResourceLocation.fromNamespaceAndPath(StructurizeReplacements.MODID, RESOURCE));
+        super(Identifier.fromNamespaceAndPath(StructurizeReplacements.MODID, RESOURCE));
         this.context = context;
         this.parent = parent;
         this.context.setReloader(this::reload);
@@ -452,8 +452,8 @@ public class WindowReplacements extends AbstractWindowSkeleton
         {
             if (Minecraft.getInstance().player != null)
             {
-                Minecraft.getInstance().player.displayClientMessage(
-                        Component.translatable("structurizereplacements.gui.replace.no_candidates", source.getName()), true);
+                Minecraft.getInstance().player.sendOverlayMessage(
+                        Component.translatable("structurizereplacements.gui.replace.no_candidates", source.getName()));
             }
             return;
         }

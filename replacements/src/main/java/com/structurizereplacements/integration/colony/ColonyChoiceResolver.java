@@ -46,7 +46,7 @@ public final class ColonyChoiceResolver
         // colony lookup relies on is not reliably synced client-side). The view only mirrors what the
         // server synced; never adopt/persist here. Return a non-null map (empty when the building has no
         // override) so the caller knows a building exists here and must NOT fall back to the session picks.
-        if (world.isClientSide)
+        if (world.isClientSide())
         {
             final Object view = bridge.buildingViewAt(world, worldPos);
             if (view instanceof PlacementChoiceHolder holder)

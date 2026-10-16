@@ -1,13 +1,14 @@
 package com.structurizereplacements.preset;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.structurizereplacements.StructurizeReplacements;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
+import net.minecraft.resources.FileToIdConverter;
+import net.minecraft.util.ExtraCodecs;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.level.block.Block;
@@ -41,24 +42,24 @@ import java.util.Map;
  * folder in the navigable picker (e.g. {@code .../rock_types/granite.json} → folder {@code "rock_types"}). Loaded
  * server-side and synced to clients (see {@code SyncBuiltinPresetsMessage}).
  */
-public class BuiltinPresetReloadListener extends SimpleJsonResourceReloadListener
+public class BuiltinPresetReloadListener extends SimpleJsonResourceReloadListener<JsonElement>
 {
-    private static final Gson GSON = new Gson();
     public static final String DIRECTORY = "block_substitution_presets";
 
     public BuiltinPresetReloadListener()
     {
-        super(GSON, DIRECTORY);
+        // PORT(26.1): listeners decode through a Codec and take a FileToIdConverter instead of Gson + folder.
+        super(ExtraCodecs.JSON, FileToIdConverter.json(DIRECTORY));
     }
 
     @Override
-    protected void apply(final Map<ResourceLocation, JsonElement> files, final ResourceManager manager, final ProfilerFiller profiler)
+    protected void apply(final Map<Identifier, JsonElement> files, final ResourceManager manager, final ProfilerFiller profiler)
     {
         final List<Preset> presets = new ArrayList<>();
         // Sorted ids for a stable preset order regardless of the HashMap vanilla hands us.
-        final List<ResourceLocation> ordered = new ArrayList<>(files.keySet());
+        final List<Identifier> ordered = new ArrayList<>(files.keySet());
         ordered.sort(null);
-        for (final ResourceLocation file : ordered)
+        for (final Identifier file : ordered)
         {
             try
             {
@@ -101,7 +102,7 @@ public class BuiltinPresetReloadListener extends SimpleJsonResourceReloadListene
 
     private static Block block(final String id)
     {
-        final ResourceLocation key = ResourceLocation.tryParse(id);
-        return (key != null && BuiltInRegistries.BLOCK.containsKey(key)) ? BuiltInRegistries.BLOCK.get(key) : null;
+        final Identifier key = Identifier.tryParse(id);
+        return (key != null && BuiltInRegistries.BLOCK.containsKey(key)) ? BuiltInRegistries.BLOCK.getValue(key) : null;
     }
 }

@@ -1,13 +1,14 @@
 package com.structurizereplacements.substitution;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.structurizereplacements.StructurizeReplacements;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
+import net.minecraft.resources.FileToIdConverter;
+import net.minecraft.util.ExtraCodecs;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.profiling.ProfilerFiller;
@@ -53,27 +54,27 @@ import java.util.Map;
  * }
  * }</pre>
  */
-public class BlockSubstitutionReloadListener extends SimpleJsonResourceReloadListener
+public class BlockSubstitutionReloadListener extends SimpleJsonResourceReloadListener<JsonElement>
 {
-    private static final Gson GSON = new Gson();
     public static final String DIRECTORY = "block_substitutions";
 
     public BlockSubstitutionReloadListener()
     {
-        super(GSON, DIRECTORY);
+        // PORT(26.1): listeners decode through a Codec and take a FileToIdConverter instead of Gson + folder.
+        super(ExtraCodecs.JSON, FileToIdConverter.json(DIRECTORY));
     }
 
     @Override
-    protected void apply(final Map<ResourceLocation, JsonElement> files, final ResourceManager manager, final ProfilerFiller profiler)
+    protected void apply(final Map<Identifier, JsonElement> files, final ResourceManager manager, final ProfilerFiller profiler)
     {
         final List<SubstitutionRule> rules = new ArrayList<>();
         final List<CandidateRule> candidates = new ArrayList<>();
 
         // Sorted file ids: vanilla hands us a HashMap, so iteration order — and with it the equal-priority
         // tie-break — would otherwise be hash-arbitrary across files.
-        final List<ResourceLocation> orderedFiles = new ArrayList<>(files.keySet());
+        final List<Identifier> orderedFiles = new ArrayList<>(files.keySet());
         orderedFiles.sort(null);
-        for (final ResourceLocation file : orderedFiles)
+        for (final Identifier file : orderedFiles)
         {
             // Per-file staging, committed only when the whole file parses — a throwing entry mid-file must
             // not half-apply the file while the log claims it was skipped.
@@ -105,7 +106,7 @@ public class BlockSubstitutionReloadListener extends SimpleJsonResourceReloadLis
      * either {@code "to_tag"} (interactive candidate pool → {@link CandidateRule}) or {@code "to"}
      * (fixed block → {@link SubstitutionRule}).
      */
-    private static void parseInto(final JsonObject obj, final ResourceLocation file,
+    private static void parseInto(final JsonObject obj, final Identifier file,
                                   final List<SubstitutionRule> rules,
                                   final List<CandidateRule> candidates)
     {
@@ -114,7 +115,7 @@ public class BlockSubstitutionReloadListener extends SimpleJsonResourceReloadLis
         TagKey<Block> fromTag = null;
         if (obj.has("from"))
         {
-            final ResourceLocation fromId = ResourceLocation.tryParse(GsonHelper.getAsString(obj, "from"));
+            final Identifier fromId = Identifier.tryParse(GsonHelper.getAsString(obj, "from"));
             fromBlock = block(fromId);
             if (fromBlock == null)
             {
@@ -124,7 +125,7 @@ public class BlockSubstitutionReloadListener extends SimpleJsonResourceReloadLis
         }
         else if (obj.has("from_tag"))
         {
-            final ResourceLocation tagId = ResourceLocation.tryParse(GsonHelper.getAsString(obj, "from_tag"));
+            final Identifier tagId = Identifier.tryParse(GsonHelper.getAsString(obj, "from_tag"));
             if (tagId == null)
             {
                 StructurizeReplacements.LOGGER.warn("Substitution in {} has a malformed 'from_tag'; skipping.", file);
@@ -148,7 +149,7 @@ public class BlockSubstitutionReloadListener extends SimpleJsonResourceReloadLis
         // --- target: candidate pool (interactive) ---
         if (obj.has("to_tag"))
         {
-            final ResourceLocation toTagId = ResourceLocation.tryParse(GsonHelper.getAsString(obj, "to_tag"));
+            final Identifier toTagId = Identifier.tryParse(GsonHelper.getAsString(obj, "to_tag"));
             if (toTagId == null)
             {
                 StructurizeReplacements.LOGGER.warn("Substitution in {} has a malformed 'to_tag'; skipping.", file);
@@ -161,7 +162,7 @@ public class BlockSubstitutionReloadListener extends SimpleJsonResourceReloadLis
         // --- target: fixed block ---
         if (obj.has("to"))
         {
-            final ResourceLocation toId = ResourceLocation.tryParse(GsonHelper.getAsString(obj, "to"));
+            final Identifier toId = Identifier.tryParse(GsonHelper.getAsString(obj, "to"));
             final Block to = block(toId);
             if (to == null)
             {
@@ -197,12 +198,12 @@ public class BlockSubstitutionReloadListener extends SimpleJsonResourceReloadLis
     }
 
     @Nullable
-    private static Block block(@Nullable final ResourceLocation id)
+    private static Block block(@Nullable final Identifier id)
     {
         if (id == null || !BuiltInRegistries.BLOCK.containsKey(id))
         {
             return null;
         }
-        return BuiltInRegistries.BLOCK.get(id);
+        return BuiltInRegistries.BLOCK.getValue(id);
     }
 }

@@ -156,7 +156,7 @@ public class MixinStructurePlacer
                                                             final BlockInfo blockInfo, final CallbackInfoReturnable<BlockPlacementResult> cir)
     {
         if (cir.getReturnValue().getResult() != BlockPlacementResult.Result.SUCCESS
-                || world.isClientSide
+                || world.isClientSide()
                 || !ColonyIntegration.placementIgnoresDoMaterials()
                 || blockInfo.getState() == null
                 || !DomumMaterialRewriter.isMaterializedBlock(blockInfo.getState().getBlock()))

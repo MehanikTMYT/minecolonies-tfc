@@ -2,7 +2,7 @@ package com.structurizereplacements.client.gui;
 
 import com.ldtteam.blockui.BOGuiGraphics;
 import com.ldtteam.blockui.controls.Tooltip;
-import com.mojang.blaze3d.vertex.PoseStack;
+import org.joml.Matrix3x2fStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.item.ItemStack;
@@ -32,7 +32,6 @@ public class IconTooltip extends Tooltip
     /** Extra px between lines so a 16px icon fits alongside one ~9px text line without overlapping the next. */
     private static final int LINESPACE = 9;
     /** Z above {@link Tooltip}'s own text/background pass (200) so the icons sit on top of the box. */
-    private static final double ICON_Z = 250.0d;
 
     /** Icon per input row, index-aligned to {@link #rowTexts}; {@code null}/empty = no icon (a header row). */
     private final List<ItemStack> rowIcons = new ArrayList<>();
@@ -95,9 +94,10 @@ public class IconTooltip extends Tooltip
         final int pitch = mc.font.lineHeight + textLinespace;
         final int iconLift = (ICON_SIZE - mc.font.lineHeight) / 2; // center the 16px icon on its ~9px text line
 
-        final PoseStack pose = target.pose();
-        pose.pushPose();
-        pose.translate(x, y, ICON_Z);
+        // PORT(26.1): GUI drawing is 2D (Matrix3x2f); items are layered by submission order, not by a Z offset.
+        final Matrix3x2fStack pose = target.pose();
+        pose.pushMatrix();
+        pose.translate(x, y);
         int line = 0;
         for (int i = 0; i < rowTexts.size(); i++)
         {
@@ -105,10 +105,10 @@ public class IconTooltip extends Tooltip
             if (icon != null && !icon.isEmpty())
             {
                 final int lineTop = textOffsetY + line * pitch;
-                target.renderItem(icon, ICON_X, lineTop - iconLift);
+                target.item(icon, ICON_X, lineTop - iconLift);
             }
             line += Math.max(1, mc.font.split(rowTexts.get(i), splitWidth).size());
         }
-        pose.popPose();
+        pose.popMatrix();
     }
 }

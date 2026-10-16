@@ -7,6 +7,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.Block;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
@@ -79,6 +80,6 @@ public final class Network
     /** Client → server: send the current choice map (source block → chosen target). */
     public static void sendChoicesToServer(final Map<Block, Block> choices)
     {
-        PacketDistributor.sendToServer(new SyncReplacementChoicesMessage(choices));
+        ClientPacketDistributor.sendToServer(new SyncReplacementChoicesMessage(choices));
     }
 }

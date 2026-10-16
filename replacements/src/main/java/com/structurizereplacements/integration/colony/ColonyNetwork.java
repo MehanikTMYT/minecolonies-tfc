@@ -5,6 +5,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.Block;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.network.PacketDistributor;
+import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
@@ -45,12 +46,12 @@ public final class ColonyNetwork
     /** Client → server: set a single building's hut-palette replacement choices. */
     public static void sendBuildingChoices(final BlockPos buildingPos, final Map<Block, Block> choices)
     {
-        PacketDistributor.sendToServer(new SetBuildingChoicesMessage(buildingPos, choices, false));
+        ClientPacketDistributor.sendToServer(new SetBuildingChoicesMessage(buildingPos, choices, false));
     }
 
     /** Client → server: set the miner's mineshaft-palette replacement choices. */
     public static void sendMineshaftChoices(final BlockPos buildingPos, final Map<Block, Block> choices)
     {
-        PacketDistributor.sendToServer(new SetBuildingChoicesMessage(buildingPos, choices, true));
+        ClientPacketDistributor.sendToServer(new SetBuildingChoicesMessage(buildingPos, choices, true));
     }
 }

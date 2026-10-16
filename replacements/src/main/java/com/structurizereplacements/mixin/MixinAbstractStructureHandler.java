@@ -65,7 +65,7 @@ public class MixinAbstractStructureHandler implements PlacementChoiceHolder
         {
             return null;
         }
-        if (world.isClientSide)
+        if (world.isClientSide())
         {
             // A building at this position is authoritative: use ITS choices and never bleed in the global
             // session picks. The resolver returns non-null when a building exists here (an empty map means

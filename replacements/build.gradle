@@ -11,7 +11,7 @@ plugins {
     id 'java'
     id 'eclipse'
     id 'idea'
-    id 'net.neoforged.moddev'
+    id 'net.neoforged.gradle.userdev'
 }
 
 def mod_id = 'structurizereplacements'
@@ -34,7 +34,7 @@ def full_version = "${minecraft_version}-${mod_version}".toString()
 version = full_version
 group = mod_group_id
 base { archivesName = mod_id }
-java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+java.toolchain.languageVersion = JavaLanguageVersion.of(25)
 
 // SlimColonies (a MineColonies fork) has NO 1.21.1 build — every published file is 1.20.1 — so we can't
 // compile against it here. Its integration is PARKED, not deleted: the sources stay on disk so the file
@@ -52,49 +52,25 @@ sourceSets.main.resources {
     exclude "${mod_id}.slimcolonies.mixins.json"
 }
 
-neoForge {
-    version = neoforge_version
-
-    // Which source sets are treated as this mod in dev runs (MDG's replacement for FG's `mods { source }`).
-    mods {
-        "${mod_id}" {
-            sourceSet sourceSets.main
-        }
+// PORT(26.1.2): NeoGradle userdev, same toolchain as the rest of the fleet's MineColonies addons.
+runs {
+    configureEach {
+        systemProperty 'forge.logging.markers', 'REGISTRIES'
+        systemProperty 'neoforge.enabledGameTestNamespaces', mod_id
+        workingDirectory project.layout.projectDirectory.dir('run').dir(name)
+        modSource project.sourceSets.main
+        jvmArgument '-Xmx1536m'
     }
+    client { }
+    server { argument '--nogui' }
+}
 
-    // Standalone runs: load ONLY this mod (+ Structurize/BlockUI/Domum from the deps below). No TFC here —
-    // this proves the mod works independently and is faster to launch. The full stack is run from :compat
-    // once that subproject is ported.
-    runs {
-        configureEach {
-            systemProperty 'neoforge.logging.markers', 'REGISTRIES'
-            logLevel = org.slf4j.event.Level.DEBUG
-        }
-        client {
-            client()
-            gameDirectory = project.file('run')
-            systemProperty 'neoforge.enabledGameTestNamespaces', mod_id
-        }
-        server {
-            server()
-            // Own working dir so client + server can run simultaneously (a shared run/ collides on the
-            // logs/latest.log file lock on Windows). run-server/eula.txt + server.properties
-            // (online-mode=false for the offline Dev account) are pre-created, not generated.
-            gameDirectory = project.file('run-server')
-            systemProperty 'neoforge.enabledGameTestNamespaces', mod_id
-            programArgument '--nogui'
-        }
-        data {
-            data()
-            gameDirectory = project.file('run-data')
-            programArguments.addAll '--mod', mod_id, '--all',
-                    '--output', file('src/generated/resources/').absolutePath,
-                    '--existing', file('src/main/resources/').absolutePath
-        }
-    }
+configurations {
+    runtimeClasspath.extendsFrom localRuntime
 }
 
 repositories {
+    mavenLocal()
     mavenCentral()
     maven {
         name = 'LDTTeam - Modding'
@@ -103,37 +79,19 @@ repositories {
 }
 
 dependencies {
-    // Structurize is the only mandatory mod dependency. BlockUI is Structurize's GUI library — needed at
-    // compile time too since we build BlockUI windows / buttons.
+    implementation "net.neoforged:neoforge:${neoforge_version}"
+
+    // Our locally ported 26.1.2 LDT stack (mavenLocal), MineColonies straight from its build output.
     implementation "com.ldtteam:structurize:${structurize_version}"
     implementation "com.ldtteam:blockui:${blockui_version}"
-
-    // MineColonies is an OPTIONAL dependency (neoforge.mods.toml: type="optional"). The optional
-    // integration (shared logic in integration.colony + the per-fork bridge and mixin config) compiles
-    // against it but is never bundled; those classes/mixins only load when MineColonies is present.
-    compileOnly "com.ldtteam:minecolonies:${minecolonies_version}"
-    // The dev runClient loads MineColonies unless you opt out:
-    //   gradlew :replacements:runClient -PcolonyMod=minecolonies|none
-    // default = minecolonies; 'none' dev-tests the colony-mod-absent (pure standalone) path.
-    // (No 'slim' option on this branch — SlimColonies has no 1.21.1 build; see the parking note above.)
-    // NOTE: Domum Ornamentum below stays in ALL cases — it's a mandatory dependency of Structurize itself,
-    // not just of MineColonies, so removing it crashes Structurize at load with a misleading
-    // "mixin config could not be read" error.
+    compileOnly files("$rootDir/../../MineColonies/build/libs/minecolonies-${minecolonies_version}.jar")
     def colonyMod = providers.gradleProperty('colonyMod').getOrElse('minecolonies')
     if (colonyMod != 'none') {
-        runtimeOnly "com.ldtteam:minecolonies:${minecolonies_version}"
+        localRuntime files("$rootDir/../../MineColonies/build/libs/minecolonies-${minecolonies_version}.jar")
+        localRuntime "com.ldtteam:multipiston:0.0.1-26.1.2"
     }
-    // compileOnly too: DomumMaterialRewriter substitutes the material(s) stored in DO "materialized" blocks'
-    // textureData NBT (panel/brick/framed/...). DO is always present at runtime, so no load guard is needed.
-    // Artifact id is HYPHENATED on 1.21.1 (was domum_ornamentum with an underscore on 1.20.1).
-    // The version MUST stay >= what MineColonies requires: it calls into DO classes directly (e.g.
-    // DynamicTimberFrameBlock from DoBlockPlacementHandler), so an older DO crashes with
-    // NoClassDefFoundError the moment a hut's material list is computed. See gradle.properties.
     compileOnly "com.ldtteam:domum-ornamentum:${domum_ornamentum_version}"
-    runtimeOnly "com.ldtteam:domum-ornamentum:${domum_ornamentum_version}"
-
-    // MixinExtras (@WrapOperation/@ModifyExpressionValue/@Local/...) needs no declaration here: NeoForge
-    // depends on mixinextras-neoforge, so its annotations are already on the compile + runtime classpath.
+    localRuntime "com.ldtteam:domum-ornamentum:${domum_ornamentum_version}"
 }
 
 tasks.named('processResources', ProcessResources).configure {

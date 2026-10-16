@@ -8,7 +8,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
@@ -24,7 +24,7 @@ public class SyncReplacementChoicesMessage implements CustomPacketPayload
 {
     public static final CustomPacketPayload.Type<SyncReplacementChoicesMessage> TYPE =
             new CustomPacketPayload.Type<>(
-                    ResourceLocation.fromNamespaceAndPath(StructurizeReplacements.MODID, "replacement_choices"));
+                    Identifier.fromNamespaceAndPath(StructurizeReplacements.MODID, "replacement_choices"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, SyncReplacementChoicesMessage> STREAM_CODEC =
             StreamCodec.ofMember(SyncReplacementChoicesMessage::encode, SyncReplacementChoicesMessage::new);
@@ -32,14 +32,14 @@ public class SyncReplacementChoicesMessage implements CustomPacketPayload
     /** Decode cap — a blueprint holds at most a few hundred distinct blocks; reject anything absurd. */
     private static final int MAX_CHOICES = 4096;
 
-    private final Map<ResourceLocation, ResourceLocation> choices;
+    private final Map<Identifier, Identifier> choices;
 
     public SyncReplacementChoicesMessage(final Map<Block, Block> blockChoices)
     {
         this.choices = new HashMap<>();
         blockChoices.forEach((from, to) -> {
-            final ResourceLocation fromId = BuiltInRegistries.BLOCK.getKey(from);
-            final ResourceLocation toId = BuiltInRegistries.BLOCK.getKey(to);
+            final Identifier fromId = BuiltInRegistries.BLOCK.getKey(from);
+            final Identifier toId = BuiltInRegistries.BLOCK.getKey(to);
             if (fromId != null && toId != null)
             {
                 this.choices.put(fromId, toId);
@@ -57,7 +57,7 @@ public class SyncReplacementChoicesMessage implements CustomPacketPayload
         this.choices = new HashMap<>(size);
         for (int i = 0; i < size; i++)
         {
-            this.choices.put(buf.readResourceLocation(), buf.readResourceLocation());
+            this.choices.put(buf.readIdentifier(), buf.readIdentifier());
         }
     }
 
@@ -65,8 +65,8 @@ public class SyncReplacementChoicesMessage implements CustomPacketPayload
     {
         buf.writeVarInt(choices.size());
         choices.forEach((from, to) -> {
-            buf.writeResourceLocation(from);
-            buf.writeResourceLocation(to);
+            buf.writeIdentifier(from);
+            buf.writeIdentifier(to);
         });
     }
 
@@ -103,8 +103,8 @@ public class SyncReplacementChoicesMessage implements CustomPacketPayload
         });
     }
 
-    private static Block block(final ResourceLocation id)
+    private static Block block(final Identifier id)
     {
-        return BuiltInRegistries.BLOCK.containsKey(id) ? BuiltInRegistries.BLOCK.get(id) : null;
+        return BuiltInRegistries.BLOCK.containsKey(id) ? BuiltInRegistries.BLOCK.getValue(id) : null;
     }
 }
